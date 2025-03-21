@@ -1,49 +1,30 @@
 const axios = require("axios");
-const { API_URLS, WINDOW_SIZE } = require("../config/server.js");
+const { fetchAuthToken } = require("./auth.service.js");
+require("dotenv").config();
 
-let storedNumbers = [];
+const API_MAP = {
+    p: "primes",
+    f: "fibo",
+    e: "even",
+    r: "rand"
+};
 
 const fetchNumbers = async (type) => {
-  try {
-    const response = await axios.get(API_URLS[type], { timeout: 500 });
-    return response.data.numbers || [];
-  } catch (error) {
-    console.error(`Error fetching ${type} numbers:`, error.message);
-    return [];
-  }
-};
+    const url = `${process.env.THIRD_PARTY_BASE_URL}/${API_MAP[type]}`;
+    
+    try {
+        const token = await fetchAuthToken(); 
+        const response = await axios.get(url, {
+            timeout: 500,
+            headers: {
+                Authorization: `Bearer ${token}` 
+            }
+        });
 
-const storeNumbers = (newNumbers) => {
-  const prevState = [...storedNumbers];
-
-  newNumbers.forEach((num) => {
-    if (!storedNumbers.includes(num)) {
-      storedNumbers.push(num);
+        return response.data.numbers || [];
+    } catch (error) {
+        return [];
     }
-  });
-
-  if (storedNumbers.length > WINDOW_SIZE) {
-    storedNumbers = storedNumbers.slice(-WINDOW_SIZE);
-  }
-
-  return { prevState, storedNumbers, newNumbers };
 };
 
-const calculateAverage = (numbers) => {
-  if (numbers.length === 0) return 0;
-  return (numbers.reduce((sum, num) => sum + num, 0) / numbers.length).toFixed(2);
-};
-
-const getAverage = async (type) => {
-  const newNumbers = await fetchNumbers(type);
-  const result = storeNumbers(newNumbers);
-
-  return {
-    windowPrevState: result.prevState,
-    windowCurrState: result.storedNumbers,
-    numbers: result.newNumbers,
-    avg: calculateAverage(result.storedNumbers),
-  };
-};
-
-module.exports = { getAverage };
+module.exports = { fetchNumbers };

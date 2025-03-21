@@ -1,7 +1,7 @@
-const express = require("express");
-const router = express.Router();
-const { calculateAverage } = require("../controllers/number.controller.js");
+const express = require('express');
+const { getNumbers } = require('../controllers/number.controller.js');
 
-router.get("/numbers/:numberid", calculateAverage);
+const router = express.Router();
+router.get('/:numberid', getNumbers);
 
 module.exports = router;
